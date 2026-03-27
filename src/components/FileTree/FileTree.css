@@ -96,3 +96,16 @@
 .file-tree-children {
   animation: slideDown 150ms ease;
 }
+
+/* Drag & Drop Visual Support */
+.file-tree-item.drag-over {
+  background: var(--color-bg-tertiary);
+  border: 1px dashed var(--color-accent);
+}
+
+.file-tree-empty.drag-over,
+.file-tree.drag-over-root {
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-accent);
+}

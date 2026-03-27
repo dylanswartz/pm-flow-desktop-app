@@ -48,10 +48,12 @@ interface FileTreeItemProps {
   activeFilePath: string | null;
   onFileClick: (path: string) => void;
   onAddToBundle: (path: string) => void;
+  onMoveNode: (oldPath: string, newPath: string) => void;
 }
 
-function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle }: FileTreeItemProps) {
+function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle, onMoveNode }: FileTreeItemProps) {
   const [expanded, setExpanded] = useState(depth < 1);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleClick = useCallback(() => {
     if (node.isDir) {
@@ -68,17 +70,64 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle 
     }
   }, [node, onAddToBundle]);
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    e.dataTransfer.setData('text/plain', node.path);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (node.isDir && !isDragOver) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (node.isDir) setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (node.isDir) {
+      setIsDragOver(false);
+      const oldPath = e.dataTransfer.getData('text/plain');
+      if (!oldPath || oldPath === node.path) return;
+      
+      // Prevent nesting folder inside itself
+      if (node.path.startsWith(oldPath + '/')) return;
+      
+      const fileName = oldPath.split('/').pop();
+      if (!fileName) return;
+
+      const newPath = `${node.path}/${fileName}`;
+      // Basic check to ensure not moving into same folder
+      if (oldPath !== newPath) {
+        onMoveNode(oldPath, newPath);
+      }
+    }
+  };
+
   const isActive = !node.isDir && node.path === activeFilePath;
 
   return (
     <div className="file-tree-item-wrapper">
       <div
-        className={`file-tree-item ${isActive ? 'active' : ''}`}
+        className={`file-tree-item ${isActive ? 'active' : ''} ${isDragOver ? 'drag-over' : ''}`}
         style={{ paddingLeft: `${12 + depth * 16}px` }}
         onClick={handleClick}
         role="treeitem"
         aria-expanded={node.isDir ? expanded : undefined}
         id={`file-tree-${node.name.replace(/[^a-zA-Z0-9]/g, '-')}`}
+        draggable={true}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         {node.isDir && (
           <span className="file-tree-chevron">
@@ -110,6 +159,7 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle 
               activeFilePath={activeFilePath}
               onFileClick={onFileClick}
               onAddToBundle={onAddToBundle}
+              onMoveNode={onMoveNode}
             />
           ))}
         </div>
@@ -121,19 +171,57 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle 
 // === File Tree ===
 
 export function FileTree() {
-  const { state, openFile } = useWorkspace();
+  const { state, openFile, moveNode } = useWorkspace();
   const { addFile } = useBundle();
+  const [isRootDragOver, setIsRootDragOver] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!isRootDragOver) setIsRootDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsRootDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsRootDragOver(false);
+    const oldPath = e.dataTransfer.getData('text/plain');
+    if (!oldPath || !state.workspacePath) return;
+
+    const fileName = oldPath.split('/').pop();
+    if (!fileName) return;
+
+    const newPath = `${state.workspacePath}/${fileName}`;
+    if (oldPath !== newPath) {
+      moveNode(oldPath, newPath);
+    }
+  };
 
   if (state.fileTree.length === 0) {
     return (
-      <div className="file-tree-empty">
+      <div 
+        className={`file-tree-empty ${isRootDragOver ? 'drag-over' : ''}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <p className="text-sm text-tertiary">No markdown files found</p>
       </div>
     );
   }
 
   return (
-    <div className="file-tree" role="tree" id="file-tree">
+    <div 
+      className={`file-tree ${isRootDragOver ? 'drag-over-root' : ''}`} 
+      role="tree" 
+      id="file-tree"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {state.fileTree.map(node => (
         <FileTreeItem
           key={node.path}
@@ -142,6 +230,7 @@ export function FileTree() {
           activeFilePath={state.activeFilePath}
           onFileClick={openFile}
           onAddToBundle={addFile}
+          onMoveNode={moveNode}
         />
       ))}
     </div>

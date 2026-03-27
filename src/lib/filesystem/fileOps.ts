@@ -11,6 +11,7 @@ import {
   exists,
   mkdir,
   stat,
+  rename,
 } from '@tauri-apps/plugin-fs';
 
 export interface FileNode {
@@ -116,6 +117,13 @@ export async function createDirectory(dirPath: string): Promise<void> {
   if (!dirExists) {
     await mkdir(dirPath, { recursive: true });
   }
+}
+
+/**
+ * Move or rename a file or directory.
+ */
+export async function moveNode(oldPath: string, newPath: string): Promise<void> {
+  await rename(oldPath, newPath);
 }
 
 /**

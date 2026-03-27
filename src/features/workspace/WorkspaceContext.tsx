@@ -45,6 +45,7 @@ type WorkspaceAction =
   | { type: 'MARK_FILE_SAVED'; path: string }
   | { type: 'SET_LOADING'; loading: boolean }
   | { type: 'SET_ERROR'; error: string | null }
+  | { type: 'UPDATE_OPEN_FILE_PATHS'; oldPath: string; newPath: string }
   | { type: 'CLOSE_WORKSPACE' };
 
 // === Reducer ===
@@ -123,6 +124,25 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
     case 'SET_ERROR':
       return { ...state, error: action.error };
 
+    case 'UPDATE_OPEN_FILE_PATHS': {
+      let newActive = state.activeFilePath;
+      const updatedFiles = state.openFiles.map(f => {
+        // Exact file match
+        if (f.path === action.oldPath) {
+          if (state.activeFilePath === action.oldPath) newActive = action.newPath;
+          return { ...f, path: action.newPath, name: action.newPath.split('/').pop() || f.name };
+        }
+        // Directory prefix match
+        if (f.path.startsWith(action.oldPath + '/')) {
+          const newFilePath = f.path.replace(action.oldPath, action.newPath);
+          if (state.activeFilePath === f.path) newActive = newFilePath;
+          return { ...f, path: newFilePath };
+        }
+        return f;
+      });
+      return { ...state, openFiles: updatedFiles, activeFilePath: newActive };
+    }
+
     case 'CLOSE_WORKSPACE':
       return {
         workspacePath: null,
@@ -152,6 +172,7 @@ interface WorkspaceContextValue {
   saveActiveFile: () => Promise<void>;
   createFile: (dirPath: string, name: string, content?: string) => Promise<void>;
   createDirectory: (dirPath: string, name: string) => Promise<void>;
+  moveNode: (oldPath: string, newPath: string) => Promise<void>;
   closeWorkspace: () => void;
   getActiveFile: () => OpenFile | undefined;
 }
@@ -292,6 +313,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [refreshFileTree]);
 
+  const moveNode = useCallback(async (oldPath: string, newPath: string) => {
+    try {
+      const { moveNode: fsMoveNode } = await import('../../lib/filesystem/fileOps');
+      await fsMoveNode(oldPath, newPath);
+      dispatch({ type: 'UPDATE_OPEN_FILE_PATHS', oldPath, newPath });
+      await refreshFileTree();
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', error: `Failed to move: ${err}` });
+    }
+  }, [refreshFileTree]);
+
   const closeWorkspace = useCallback(() => {
     localStorage.removeItem('pmflow-last-workspace');
     dispatch({ type: 'CLOSE_WORKSPACE' });
@@ -313,6 +345,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     saveActiveFile,
     createFile,
     createDirectory,
+    moveNode,
     closeWorkspace,
     getActiveFile,
   };
