@@ -190,7 +190,7 @@ interface WorkspaceContextValue {
   moveNode: (oldPath: string, newPath: string) => Promise<void>;
   renameNode: (oldPath: string, newName: string) => Promise<void>;
   deleteNode: (path: string, isDir: boolean) => Promise<void>;
-  duplicateFile: (path: string) => Promise<void>;
+  duplicateFile: (path: string) => Promise<string | undefined>;
   closeWorkspace: () => void;
   getActiveFile: () => OpenFile | undefined;
 }
@@ -366,12 +366,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [refreshFileTree]);
 
   const duplicateFile = useCallback(async (path: string) => {
+    console.log('[WorkspaceContext] duplicateFile called with path:', path);
     try {
       const { duplicateFile: fsDuplicateFile } = await import('../../lib/filesystem/fileOps');
-      await fsDuplicateFile(path);
+      const newPath = await fsDuplicateFile(path);
+      console.log('[WorkspaceContext] new path received:', newPath);
       await refreshFileTree();
+      return newPath;
     } catch (err) {
+      console.error('[WorkspaceContext] duplicate error:', err);
       dispatch({ type: 'SET_ERROR', error: `Failed to duplicate: ${err}` });
+      return undefined;
     }
   }, [refreshFileTree]);
 

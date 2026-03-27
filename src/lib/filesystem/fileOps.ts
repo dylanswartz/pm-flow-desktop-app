@@ -136,23 +136,27 @@ export async function deleteNode(path: string, isDir: boolean): Promise<void> {
 }
 
 /**
- * Duplicate a file. Generates a unique " (copy)" suffix.
+ * Duplicate a file. Generates a unique " Copy" suffix.
  */
 export async function duplicateFile(path: string): Promise<string> {
+  console.log('[fileOps] duplicateFile called with path:', path);
   const dirPath = path.substring(0, path.lastIndexOf('/'));
   const filename = path.substring(path.lastIndexOf('/') + 1);
   const ext = filename.endsWith('.md') ? '.md' : '';
-  const baseName = filename.substring(0, filename.length - ext.length);
+  let baseName = filename.substring(0, filename.length - ext.length);
   
-  let newName = `${baseName} (copy)${ext}`;
+  // If baseline already ends with " Copy" or " Copy-n", strip it to cleanly increment.
+  // Although the prompt just says auto go to renaming, we should ensure clean copies.
+  let newName = `${baseName} Copy${ext}`;
   let newPath = `${dirPath}/${newName}`;
   let counter = 1;
   while (await exists(newPath)) {
-    counter++;
-    newName = `${baseName} (copy ${counter})${ext}`;
+    newName = `${baseName} Copy-${counter}${ext}`;
     newPath = `${dirPath}/${newName}`;
+    counter++;
   }
   
+  console.log('[fileOps] Copying to new path:', newPath);
   await copyFile(path, newPath);
   return newPath;
 }

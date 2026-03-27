@@ -9,6 +9,7 @@ import { useWorkspace } from '../../features/workspace/WorkspaceContext';
 import { useBundle } from '../../features/bundle/BundleContext';
 import { ContextMenu } from './ContextMenu';
 import { RenameModal } from '../Modals/RenameModal';
+import { DeleteModal } from '../Modals/DeleteModal';
 import './FileTree.css';
 
 // === Icons ===
@@ -176,11 +177,12 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle,
 // === File Tree ===
 
 export function FileTree() {
-  const { state, openFile, moveNode, deleteNode, duplicateFile } = useWorkspace();
+  const { state, openFile, moveNode, duplicateFile } = useWorkspace();
   const { addFile } = useBundle();
   const [isRootDragOver, setIsRootDragOver] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: FileNode } | null>(null);
   const [renameNodeValue, setRenameNodeValue] = useState<FileNode | null>(null);
+  const [deleteNodeValue, setDeleteNodeValue] = useState<FileNode | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -213,22 +215,32 @@ export function FileTree() {
   }, []);
 
   const handleDelete = useCallback(() => {
-    if (!contextMenu?.node) return;
-    const { node } = contextMenu;
-    const msg = node.isDir 
-      ? `Are you sure you want to permanently delete the folder "${node.name}" and all its contents?`
-      : `Are you sure you want to permanently delete "${node.name}"?`;
-    
-    if (window.confirm(msg)) {
-      deleteNode(node.path, node.isDir);
+    if (contextMenu?.node) {
+      setDeleteNodeValue(contextMenu.node);
     }
     setContextMenu(null);
-  }, [contextMenu, deleteNode]);
+  }, [contextMenu]);
 
-  const handleDuplicate = useCallback(() => {
+  const handleDuplicate = useCallback(async () => {
+    console.log('[FileTree] handleDuplicate triggered. contextMenu?.node:', contextMenu?.node);
     if (!contextMenu?.node) return;
-    duplicateFile(contextMenu.node.path);
+    
+    // save reference to node since setContextMenu(null) might mess with closure?
+    const nodeToDuplicate = contextMenu.node;
+    console.log('[FileTree] duplicating node.path:', nodeToDuplicate.path);
     setContextMenu(null);
+
+    const newPath = await duplicateFile(nodeToDuplicate.path);
+    console.log('[FileTree] newPath returned from duplicateFile:', newPath);
+
+    if (newPath) {
+      console.log('[FileTree] setting renameNodeValue to', newPath);
+      setRenameNodeValue({
+        path: newPath,
+        name: newPath.split('/').pop() || '',
+        isDir: false
+      });
+    }
   }, [contextMenu, duplicateFile]);
 
   if (state.fileTree.length === 0) {
@@ -286,6 +298,15 @@ export function FileTree() {
           nodePath={renameNodeValue.path}
           nodeName={renameNodeValue.name}
           onClose={() => setRenameNodeValue(null)}
+        />
+      )}
+
+      {deleteNodeValue && (
+        <DeleteModal
+          nodePath={deleteNodeValue.path}
+          nodeName={deleteNodeValue.name}
+          isDir={deleteNodeValue.isDir}
+          onClose={() => setDeleteNodeValue(null)}
         />
       )}
     </div>
