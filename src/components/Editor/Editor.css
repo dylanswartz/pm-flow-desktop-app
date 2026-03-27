@@ -1,0 +1,215 @@
+/* Editor Styles */
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-primary);
+}
+
+/* Empty State */
+.editor-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--color-bg-primary);
+}
+
+.editor-empty-content {
+  text-align: center;
+  animation: fadeIn 500ms ease;
+}
+
+.editor-empty-icon {
+  margin-bottom: var(--space-4);
+  color: var(--color-text-tertiary);
+}
+
+/* Tab Bar */
+.editor-tab-bar {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-subtle);
+  height: var(--tab-bar-height);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.editor-tab-bar::-webkit-scrollbar {
+  height: 0;
+}
+
+.editor-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  height: 100%;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  border-right: 1px solid var(--color-border-subtle);
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.editor-tab:hover {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-hover);
+}
+
+.editor-tab.active {
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+}
+
+.editor-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-accent);
+}
+
+.editor-tab-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.editor-tab-dirty {
+  color: var(--color-warning);
+  font-size: 8px;
+}
+
+.editor-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-tertiary);
+  opacity: 0;
+  transition: all var(--transition-fast);
+}
+
+.editor-tab:hover .editor-tab-close {
+  opacity: 1;
+}
+
+.editor-tab-close:hover {
+  background: var(--color-bg-active);
+  color: var(--color-text-primary);
+}
+
+/* Toolbar */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+  min-height: 36px;
+}
+
+.editor-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.editor-frontmatter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.editor-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-md);
+  padding: 2px;
+}
+
+.editor-view-toggle .btn-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.editor-view-toggle .btn-icon.active {
+  background: var(--color-accent-subtle);
+  color: var(--color-text-accent);
+}
+
+/* Content Area */
+.editor-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.editor-content--split .editor-pane {
+  width: 50%;
+}
+
+.editor-content--edit .editor-pane--edit {
+  width: 100%;
+}
+
+.editor-content--preview .editor-pane--preview {
+  width: 100%;
+}
+
+.editor-pane {
+  height: 100%;
+  overflow: auto;
+}
+
+.editor-pane--edit {
+  border-right: 1px solid var(--color-border-subtle);
+}
+
+.editor-pane--preview {
+  background: var(--color-bg-primary);
+}
+
+/* Textarea */
+.editor-textarea {
+  width: 100%;
+  height: 100%;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  padding: var(--space-4);
+  border: none;
+  outline: none;
+  resize: none;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.editor-textarea:focus {
+  box-shadow: none;
+}
+
+/* Preview */
+.editor-pane--preview .markdown-preview {
+  padding: var(--space-4) var(--space-6);
+  max-width: 800px;
+}

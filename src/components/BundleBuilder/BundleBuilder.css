@@ -1,0 +1,119 @@
+/* Bundle Builder Styles */
+
+.bundle-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  gap: var(--space-2);
+}
+
+.bundle-empty-icon {
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.bundle-builder {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.bundle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.bundle-header-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.bundle-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.bundle-item-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.bundle-item {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+  overflow: hidden;
+  animation: slideUp 200ms ease;
+}
+
+.bundle-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+}
+
+.bundle-item-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bundle-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.bundle-item-sections {
+  border-top: 1px solid var(--color-border-subtle);
+  padding: var(--space-1) var(--space-2);
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.bundle-section-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px var(--space-1);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.bundle-section-check:hover {
+  background: var(--color-bg-hover);
+}
+
+.bundle-section-check input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.bundle-preview {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-3);
+}
+
+.bundle-preview .markdown-preview {
+  font-size: var(--text-xs);
+}
