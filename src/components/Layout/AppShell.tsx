@@ -6,6 +6,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useWorkspace } from '../../features/workspace/WorkspaceContext';
 import { useBundle } from '../../features/bundle/BundleContext';
+import { Titlebar } from './Titlebar';
 import { FileTree } from '../../components/FileTree/FileTree';
 import { Editor } from '../../components/Editor/Editor';
 import { BundleBuilder } from '../BundleBuilder/BundleBuilder';
@@ -159,23 +160,14 @@ export function AppShell() {
   const handleNewFolder = useCallback(() => setShowNewFolder(true), []);
 
   return (
-    <div className="app-shell" id="app-shell">
-      {/* Sidebar */}
-      <aside className="sidebar" id="sidebar">
-        {/* Sidebar Header */}
-        <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 2L10.5 6.5L15 8L10.5 9.5L9 14L7.5 9.5L3 8L7.5 6.5L9 2Z" stroke="url(#logo-grad-small)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <defs>
-                <linearGradient id="logo-grad-small" x1="3" y1="2" x2="15" y2="14">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="100%" stopColor="#8b5cf6" />
-                </linearGradient>
-              </defs>
-            </svg>
+    <>
+      <Titlebar />
+      <div className="app-shell" id="app-shell">
+        {/* Sidebar */}
+        <aside className="sidebar" id="sidebar">
+          {/* Sidebar Header */}
+          <div className="sidebar-header">
             <span className="sidebar-title font-semibold">PM Flow</span>
-          </div>
           <div className="sidebar-actions">
             <button
               className="btn btn-icon btn-ghost tooltip"
@@ -303,5 +295,6 @@ export function AppShell() {
       {showNewFolder && <NewFolderModal onClose={() => setShowNewFolder(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
+    </>
   );
 }

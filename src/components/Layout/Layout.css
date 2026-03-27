@@ -75,6 +75,7 @@
   display: flex;
   width: 100vw;
   height: 100vh;
+  padding-top: 32px; /* For custom titlebar */
   overflow: hidden;
 }
 
