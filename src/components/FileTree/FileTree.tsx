@@ -7,6 +7,8 @@ import { useState, useCallback } from 'react';
 import { type FileNode } from '../../lib/filesystem/fileOps';
 import { useWorkspace } from '../../features/workspace/WorkspaceContext';
 import { useBundle } from '../../features/bundle/BundleContext';
+import { ContextMenu } from './ContextMenu';
+import { RenameModal } from '../Modals/RenameModal';
 import './FileTree.css';
 
 // === Icons ===
@@ -49,9 +51,10 @@ interface FileTreeItemProps {
   onFileClick: (path: string) => void;
   onAddToBundle: (path: string) => void;
   onMoveNode: (oldPath: string, newPath: string) => void;
+  onContextMenu: (e: React.MouseEvent, node: FileNode) => void;
 }
 
-function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle, onMoveNode }: FileTreeItemProps) {
+function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle, onMoveNode, onContextMenu }: FileTreeItemProps) {
   const [expanded, setExpanded] = useState(depth < 1);
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -128,6 +131,7 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle,
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onContextMenu={e => onContextMenu(e, node)}
       >
         {node.isDir && (
           <span className="file-tree-chevron">
@@ -160,6 +164,7 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle,
               onFileClick={onFileClick}
               onAddToBundle={onAddToBundle}
               onMoveNode={onMoveNode}
+              onContextMenu={onContextMenu}
             />
           ))}
         </div>
@@ -171,9 +176,11 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle,
 // === File Tree ===
 
 export function FileTree() {
-  const { state, openFile, moveNode } = useWorkspace();
+  const { state, openFile, moveNode, deleteNode, duplicateFile } = useWorkspace();
   const { addFile } = useBundle();
   const [isRootDragOver, setIsRootDragOver] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: FileNode } | null>(null);
+  const [renameNodeValue, setRenameNodeValue] = useState<FileNode | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -199,6 +206,30 @@ export function FileTree() {
       moveNode(oldPath, newPath);
     }
   };
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, node: FileNode) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, node });
+  }, []);
+
+  const handleDelete = useCallback(() => {
+    if (!contextMenu?.node) return;
+    const { node } = contextMenu;
+    const msg = node.isDir 
+      ? `Are you sure you want to permanently delete the folder "${node.name}" and all its contents?`
+      : `Are you sure you want to permanently delete "${node.name}"?`;
+    
+    if (window.confirm(msg)) {
+      deleteNode(node.path, node.isDir);
+    }
+    setContextMenu(null);
+  }, [contextMenu, deleteNode]);
+
+  const handleDuplicate = useCallback(() => {
+    if (!contextMenu?.node) return;
+    duplicateFile(contextMenu.node.path);
+    setContextMenu(null);
+  }, [contextMenu, duplicateFile]);
 
   if (state.fileTree.length === 0) {
     return (
@@ -231,8 +262,32 @@ export function FileTree() {
           onFileClick={openFile}
           onAddToBundle={addFile}
           onMoveNode={moveNode}
+          onContextMenu={handleContextMenu}
         />
       ))}
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          isDir={contextMenu.node.isDir}
+          onRename={() => {
+            setRenameNodeValue(contextMenu.node);
+            setContextMenu(null);
+          }}
+          onDuplicate={handleDuplicate}
+          onDelete={handleDelete}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {renameNodeValue && (
+        <RenameModal
+          nodePath={renameNodeValue.path}
+          nodeName={renameNodeValue.name}
+          onClose={() => setRenameNodeValue(null)}
+        />
+      )}
     </div>
   );
 }

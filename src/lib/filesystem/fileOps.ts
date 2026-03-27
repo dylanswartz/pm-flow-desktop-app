@@ -12,6 +12,8 @@ import {
   mkdir,
   stat,
   rename,
+  copyFile,
+  remove as tauriRemove,
 } from '@tauri-apps/plugin-fs';
 
 export interface FileNode {
@@ -124,6 +126,35 @@ export async function createDirectory(dirPath: string): Promise<void> {
  */
 export async function moveNode(oldPath: string, newPath: string): Promise<void> {
   await rename(oldPath, newPath);
+}
+
+/**
+ * Delete a file or directory.
+ */
+export async function deleteNode(path: string, isDir: boolean): Promise<void> {
+  await tauriRemove(path, { recursive: isDir });
+}
+
+/**
+ * Duplicate a file. Generates a unique " (copy)" suffix.
+ */
+export async function duplicateFile(path: string): Promise<string> {
+  const dirPath = path.substring(0, path.lastIndexOf('/'));
+  const filename = path.substring(path.lastIndexOf('/') + 1);
+  const ext = filename.endsWith('.md') ? '.md' : '';
+  const baseName = filename.substring(0, filename.length - ext.length);
+  
+  let newName = `${baseName} (copy)${ext}`;
+  let newPath = `${dirPath}/${newName}`;
+  let counter = 1;
+  while (await exists(newPath)) {
+    counter++;
+    newName = `${baseName} (copy ${counter})${ext}`;
+    newPath = `${dirPath}/${newName}`;
+  }
+  
+  await copyFile(path, newPath);
+  return newPath;
 }
 
 /**

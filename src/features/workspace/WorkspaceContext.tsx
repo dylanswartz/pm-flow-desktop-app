@@ -46,6 +46,7 @@ type WorkspaceAction =
   | { type: 'SET_LOADING'; loading: boolean }
   | { type: 'SET_ERROR'; error: string | null }
   | { type: 'UPDATE_OPEN_FILE_PATHS'; oldPath: string; newPath: string }
+  | { type: 'REMOVE_OPEN_FILES_BY_PATH'; pathOrPrefix: string }
   | { type: 'CLOSE_WORKSPACE' };
 
 // === Reducer ===
@@ -143,6 +144,20 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
       return { ...state, openFiles: updatedFiles, activeFilePath: newActive };
     }
 
+    case 'REMOVE_OPEN_FILES_BY_PATH': {
+      const remainingFiles = state.openFiles.filter(f => 
+        f.path !== action.pathOrPrefix && !f.path.startsWith(action.pathOrPrefix + '/')
+      );
+      
+      let newActive = state.activeFilePath;
+      // If active file was removed, set to the last remaining file
+      if (!remainingFiles.find(f => f.path === state.activeFilePath)) {
+        newActive = remainingFiles.length > 0 ? remainingFiles[remainingFiles.length - 1].path : null;
+      }
+      
+      return { ...state, openFiles: remainingFiles, activeFilePath: newActive };
+    }
+
     case 'CLOSE_WORKSPACE':
       return {
         workspacePath: null,
@@ -173,6 +188,9 @@ interface WorkspaceContextValue {
   createFile: (dirPath: string, name: string, content?: string) => Promise<void>;
   createDirectory: (dirPath: string, name: string) => Promise<void>;
   moveNode: (oldPath: string, newPath: string) => Promise<void>;
+  renameNode: (oldPath: string, newName: string) => Promise<void>;
+  deleteNode: (path: string, isDir: boolean) => Promise<void>;
+  duplicateFile: (path: string) => Promise<void>;
   closeWorkspace: () => void;
   getActiveFile: () => OpenFile | undefined;
 }
@@ -324,6 +342,39 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [refreshFileTree]);
 
+  const renameNode = useCallback(async (oldPath: string, newName: string) => {
+    const dirPath = oldPath.substring(0, oldPath.lastIndexOf('/'));
+    const isMd = oldPath.endsWith('.md');
+    // Ensure we don't accidentally remove .md or duplicate it
+    const cleanName = isMd && !newName.endsWith('.md') ? `${newName}.md` : newName;
+    const newPath = `${dirPath}/${cleanName}`;
+    
+    if (oldPath !== newPath) {
+      await moveNode(oldPath, newPath);
+    }
+  }, [moveNode]);
+
+  const deleteNode = useCallback(async (path: string, isDir: boolean) => {
+    try {
+      const { deleteNode: fsDeleteNode } = await import('../../lib/filesystem/fileOps');
+      await fsDeleteNode(path, isDir);
+      dispatch({ type: 'REMOVE_OPEN_FILES_BY_PATH', pathOrPrefix: path });
+      await refreshFileTree();
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', error: `Failed to delete: ${err}` });
+    }
+  }, [refreshFileTree]);
+
+  const duplicateFile = useCallback(async (path: string) => {
+    try {
+      const { duplicateFile: fsDuplicateFile } = await import('../../lib/filesystem/fileOps');
+      await fsDuplicateFile(path);
+      await refreshFileTree();
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', error: `Failed to duplicate: ${err}` });
+    }
+  }, [refreshFileTree]);
+
   const closeWorkspace = useCallback(() => {
     localStorage.removeItem('pmflow-last-workspace');
     dispatch({ type: 'CLOSE_WORKSPACE' });
@@ -346,6 +397,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     createFile,
     createDirectory,
     moveNode,
+    renameNode,
+    deleteNode,
+    duplicateFile,
     closeWorkspace,
     getActiveFile,
   };
