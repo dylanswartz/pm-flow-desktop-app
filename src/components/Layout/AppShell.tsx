@@ -11,8 +11,6 @@ import { FileTree } from '../../components/FileTree/FileTree';
 import { Editor } from '../../components/Editor/Editor';
 import { BundleBuilder } from '../BundleBuilder/BundleBuilder';
 import { AiPanel } from '../AiPanel/AiPanel';
-import { NewFileModal } from '../Modals/NewFileModal';
-import { NewFolderModal } from '../Modals/NewFolderModal';
 import { SettingsModal } from '../Modals/SettingsModal';
 import { searchFiles, type SearchResult } from '../../lib/search/search';
 import './Layout.css';
@@ -32,32 +30,14 @@ const SearchIcon = () => (
   </svg>
 );
 
-const RefreshIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-    <path d="M1 7C1 3.69 3.69 1 7 1C9.22 1 11.12 2.22 12 4M13 7C13 10.31 10.31 13 7 13C4.78 13 2.88 11.78 2 10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-    <path d="M12 1V4H9M2 13V10H5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 
-const PlusIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-    <path d="M7 3V11M3 7H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
-const FolderPlusIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-    <path d="M12 6.5V4.5C12 3.95 11.55 3.5 11 3.5H6.5L5 2H2.5C1.95 2 1.5 2.45 1.5 3V10.5C1.5 11.05 1.95 11.5 2.5 11.5H7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M10 9V13M8 11H12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-  </svg>
-);
 
 const GearIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2a2 2 0 0 1-2 2a2 2 0 0 0-2 2v.44a2 2 0 0 0 2 2a2 2 0 0 1 2 2a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2a2 2 0 0 1 2-2a2 2 0 0 0 2-2V7.78a2 2 0 0 0-2-2a2 2 0 0 1-2-2a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2a2 2 0 0 1-2 2a2 2 0 0 0-2 2v.44a2 2 0 0 0 2 2a2 2 0 0 1 2 2a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2a2 2 0 0 1 2-2a2 2 0 0 0 2-2V7.78a2 2 0 0 0-2-2a2 2 0 0 1-2-2a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
 );
 
 const LogOutIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
 );
 
 const BundleBoxIcon = () => (
@@ -99,7 +79,7 @@ function SearchResults({ results, onFileClick, onClose }: {
           >
             <span className="text-sm font-medium text-accent">{result.fileName}</span>
             <span className="text-xs text-tertiary">{result.totalMatches} match{result.totalMatches !== 1 ? 'es' : ''}</span>
-            {result.matches.slice(0, 2).map((match: {lineNumber: number; lineContent: string}, i: number) => (
+            {result.matches.slice(0, 2).map((match: { lineNumber: number; lineContent: string }, i: number) => (
               <p key={i} className="text-xs text-secondary search-match-line">
                 <span className="text-tertiary">L{match.lineNumber}: </span>
                 {match.lineContent.substring(0, 80)}
@@ -115,7 +95,7 @@ function SearchResults({ results, onFileClick, onClose }: {
 // === App Shell ===
 
 export function AppShell() {
-  const { state, selectWorkspace, refreshFileTree, openFile, closeWorkspace } = useWorkspace();
+  const { state, selectWorkspace, openFile, closeWorkspace } = useWorkspace();
   const { state: bundleState } = useBundle();
   const [rightPanel, setRightPanel] = useState<RightPanelView>('ai');
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,8 +103,6 @@ export function AppShell() {
   const [, setIsSearching] = useState(false);
 
   // Modal State
-  const [showNewFile, setShowNewFile] = useState(false);
-  const [showNewFolder, setShowNewFolder] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   // Keyboard shortcut: Ctrl+O to open workspace
@@ -156,8 +134,6 @@ export function AppShell() {
     setIsSearching(false);
   }, [state.workspacePath]);
 
-  const handleNewFile = useCallback(() => setShowNewFile(true), []);
-  const handleNewFolder = useCallback(() => setShowNewFolder(true), []);
 
   return (
     <>
@@ -165,136 +141,104 @@ export function AppShell() {
       <div className="app-shell" id="app-shell">
         {/* Sidebar */}
         <aside className="sidebar" id="sidebar">
-          {/* Sidebar Header */}
-          <div className="sidebar-header">
-            <span className="sidebar-title font-semibold">PM Flow</span>
-          <div className="sidebar-actions">
-            <button
-              className="btn btn-icon btn-ghost tooltip"
-              data-tooltip="New file"
-              onClick={handleNewFile}
-              aria-label="New file"
-            >
-              <PlusIcon />
-            </button>
-            <button
-              className="btn btn-icon btn-ghost tooltip"
-              data-tooltip="New folder"
-              onClick={handleNewFolder}
-              aria-label="New folder"
-            >
-              <FolderPlusIcon />
-            </button>
-            <button
-              className="btn btn-icon btn-ghost tooltip"
-              data-tooltip="Refresh"
-              onClick={refreshFileTree}
-              aria-label="Refresh file tree"
-            >
-              <RefreshIcon />
-            </button>
-          </div>
-        </div>
 
-        {/* Search */}
-        <div className="sidebar-search">
-          <div className="sidebar-search-input-wrapper">
-            <SearchIcon />
-            <input
-              type="text"
-              placeholder="Search files..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="sidebar-search-input"
-              id="search-input"
+          {/* Search */}
+          <div className="sidebar-search">
+            <div className="sidebar-search-input-wrapper">
+              <SearchIcon />
+              <input
+                type="text"
+                placeholder="Search files..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="sidebar-search-input"
+                id="search-input"
+              />
+            </div>
+          </div>
+
+          {/* Search Results or File Tree */}
+          {searchResults ? (
+            <SearchResults
+              results={searchResults}
+              onFileClick={openFile}
+              onClose={() => { setSearchQuery(''); setSearchResults(null); }}
             />
-          </div>
-        </div>
+          ) : (
+            <FileTree />
+          )}
 
-        {/* Search Results or File Tree */}
-        {searchResults ? (
-          <SearchResults
-            results={searchResults}
-            onFileClick={openFile}
-            onClose={() => { setSearchQuery(''); setSearchResults(null); }}
-          />
-        ) : (
-          <FileTree />
-        )}
-
-        {/* Sidebar Footer */}
-        <div className="sidebar-footer" style={{ display: 'flex', gap: '4px' }}>
-          <button
-            className="btn btn-sm btn-ghost"
-            onClick={selectWorkspace}
-            style={{ flex: 1, justifyContent: 'flex-start' }}
-            title="Switch Workspace"
-          >
-            <FolderOpenIcon />
-            <span className="truncate text-xs">
-              {state.workspacePath ? state.workspacePath.split('/').pop() : 'Open Workspace'}
-            </span>
-          </button>
-          <button
-            className="btn btn-icon btn-ghost tooltip"
-            data-tooltip="Settings"
-            onClick={() => setShowSettings(true)}
-          >
-            <GearIcon />
-          </button>
-          {state.workspacePath && (
+          {/* Sidebar Footer */}
+          <div className="sidebar-footer" style={{ display: 'flex', gap: '4px' }}>
+            <button
+              className="btn btn-sm btn-ghost"
+              onClick={selectWorkspace}
+              style={{ flex: 1, justifyContent: 'flex-start' }}
+              title="Switch Workspace"
+            >
+              <FolderOpenIcon />
+              <span className="truncate text-xs">
+                {state.workspacePath ? state.workspacePath.split('/').pop() : 'Open Workspace'}
+              </span>
+            </button>
             <button
               className="btn btn-icon btn-ghost tooltip"
-              data-tooltip="Close Workspace"
-              onClick={closeWorkspace}
+              data-tooltip="Settings"
+              onClick={() => setShowSettings(true)}
             >
-              <LogOutIcon />
+              <GearIcon />
             </button>
-          )}
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="main-content">
-        <Editor />
-      </main>
-
-      {/* Right Panel */}
-      <aside className="right-panel" id="right-panel">
-        {/* Panel Tab Switcher */}
-        <div className="right-panel-tabs">
-          <button
-            className={`right-panel-tab ${rightPanel === 'bundle' ? 'active' : ''}`}
-            onClick={() => setRightPanel('bundle')}
-          >
-            <BundleBoxIcon />
-            <span>Bundle</span>
-            {bundleState.items.length > 0 && (
-              <span className="badge badge-accent" style={{ fontSize: '9px', padding: '0 4px' }}>
-                {bundleState.items.length}
-              </span>
+            {state.workspacePath && (
+              <button
+                className="btn btn-icon btn-ghost tooltip"
+                data-tooltip="Close Workspace"
+                onClick={closeWorkspace}
+              >
+                <LogOutIcon />
+              </button>
             )}
-          </button>
-          <button
-            className={`right-panel-tab ${rightPanel === 'ai' ? 'active' : ''}`}
-            onClick={() => setRightPanel('ai')}
-          >
-            <AiIcon />
-            <span>AI</span>
-          </button>
-        </div>
+          </div>
+        </aside>
 
-        {/* Panel Content */}
-        <div className="right-panel-content">
-          {rightPanel === 'bundle' ? <BundleBuilder /> : <AiPanel />}
-        </div>
-      </aside>
+        {/* Main Content */}
+        <main className="main-content">
+          <Editor />
+        </main>
 
-      {/* Modals */}
-      {showNewFile && <NewFileModal onClose={() => setShowNewFile(false)} baseDirectory={state.selectedFolderPath || undefined} />}
-      {showNewFolder && <NewFolderModal onClose={() => setShowNewFolder(false)} />}
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
-    </div>
+        {/* Right Panel */}
+        <aside className="right-panel" id="right-panel">
+          {/* Panel Tab Switcher */}
+          <div className="right-panel-tabs">
+            <button
+              className={`right-panel-tab ${rightPanel === 'bundle' ? 'active' : ''}`}
+              onClick={() => setRightPanel('bundle')}
+            >
+              <BundleBoxIcon />
+              <span>Bundle</span>
+              {bundleState.items.length > 0 && (
+                <span className="badge badge-accent" style={{ fontSize: '9px', padding: '0 4px' }}>
+                  {bundleState.items.length}
+                </span>
+              )}
+            </button>
+            <button
+              className={`right-panel-tab ${rightPanel === 'ai' ? 'active' : ''}`}
+              onClick={() => setRightPanel('ai')}
+            >
+              <AiIcon />
+              <span>AI</span>
+            </button>
+          </div>
+
+          {/* Panel Content */}
+          <div className="right-panel-content">
+            {rightPanel === 'bundle' ? <BundleBuilder /> : <AiPanel />}
+          </div>
+        </aside>
+
+        {/* Modals */}
+        {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      </div>
     </>
   );
 }

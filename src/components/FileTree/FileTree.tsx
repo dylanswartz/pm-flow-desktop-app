@@ -10,6 +10,8 @@ import { useBundle } from '../../features/bundle/BundleContext';
 import { ContextMenu } from './ContextMenu';
 import { RenameModal } from '../Modals/RenameModal';
 import { DeleteModal } from '../Modals/DeleteModal';
+import { NewFileModal } from '../Modals/NewFileModal';
+import { NewFolderModal } from '../Modals/NewFolderModal';
 import './FileTree.css';
 
 // === Icons ===
@@ -40,6 +42,24 @@ const FolderIcon = ({ open }: { open: boolean }) => (
 const BundleIcon = () => (
   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
     <path d="M2 3H10M2 6H10M2 9H10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+  </svg>
+);
+
+const RefreshIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M1.5 7C1.5 10.0376 3.96243 12.5 7 12.5C10.0376 12.5 12.5 10.0376 12.5 7C12.5 3.96243 10.0376 1.5 7 1.5C5.48514 1.5 4.12066 2.11217 3.12354 3.10913M3.12354 3.10913V1M3.12354 3.10913H5.23242" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M7 2.5V11.5M2.5 7H11.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const FolderPlusIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M12 7.5V4.5C12 3.95 11.55 3.5 11 3.5H6.5L5 2H2.5C1.95 2 1.5 2.45 1.5 3V11C1.5 11.55 1.95 12 2.5 12H7.5M10.5 10V13M9 11.5H12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -103,10 +123,10 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle,
       setIsDragOver(false);
       const oldPath = e.dataTransfer.getData('text/plain');
       if (!oldPath || oldPath === node.path) return;
-      
+
       // Prevent nesting folder inside itself
       if (node.path.startsWith(oldPath + '/')) return;
-      
+
       const fileName = oldPath.split('/').pop();
       if (!fileName) return;
 
@@ -180,12 +200,14 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle,
 // === File Tree ===
 
 export function FileTree() {
-  const { state, openFile, moveNode, duplicateFile, setSelectedFolderPath } = useWorkspace();
+  const { state, openFile, moveNode, duplicateFile, setSelectedFolderPath, refreshFileTree } = useWorkspace();
   const { addFile } = useBundle();
   const [isRootDragOver, setIsRootDragOver] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: FileNode } | null>(null);
   const [renameNodeValue, setRenameNodeValue] = useState<FileNode | null>(null);
   const [deleteNodeValue, setDeleteNodeValue] = useState<FileNode | null>(null);
+  const [showNewFile, setShowNewFile] = useState(false);
+  const [showNewFolder, setShowNewFolder] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -227,7 +249,7 @@ export function FileTree() {
   const handleDuplicate = useCallback(async () => {
     console.log('[FileTree] handleDuplicate triggered. contextMenu?.node:', contextMenu?.node);
     if (!contextMenu?.node) return;
-    
+
     // save reference to node since setContextMenu(null) might mess with closure?
     const nodeToDuplicate = contextMenu.node;
     console.log('[FileTree] duplicating node.path:', nodeToDuplicate.path);
@@ -248,23 +270,44 @@ export function FileTree() {
 
   if (state.fileTree.length === 0) {
     return (
-      <div 
-        className={`file-tree-empty ${isRootDragOver ? 'drag-over' : ''}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <p className="text-sm text-tertiary">No markdown files found</p>
+      <div className="file-tree-container">
+        <div className="file-tree-toolbar">
+          <span className="file-tree-toolbar-title">Explorer</span>
+          <div className="file-tree-toolbar-actions">
+            <button className="btn btn-icon btn-ghost btn-xs tooltip" data-tooltip="New file" onClick={() => setShowNewFile(true)}><PlusIcon /></button>
+            <button className="btn btn-icon btn-ghost btn-xs tooltip" data-tooltip="New folder" onClick={() => setShowNewFolder(true)}><FolderPlusIcon /></button>
+            <button className="btn btn-icon btn-ghost btn-xs tooltip" data-tooltip="Refresh" onClick={refreshFileTree}><RefreshIcon /></button>
+          </div>
+        </div>
+        <div
+          className={`file-tree-empty ${isRootDragOver ? 'drag-over' : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <p className="text-sm text-tertiary">No markdown files found</p>
+        </div>
+        {showNewFile && <NewFileModal onClose={() => setShowNewFile(false)} baseDirectory={state.selectedFolderPath || undefined} />}
+        {showNewFolder && <NewFolderModal onClose={() => setShowNewFolder(false)} />}
       </div>
     );
   }
 
   return (
-    <div 
-      className={`file-tree ${isRootDragOver ? 'drag-over-root' : ''}`} 
-      role="tree" 
-      id="file-tree"
-      onDragOver={handleDragOver}
+    <div className="file-tree-container" id="file-tree-container">
+      <div className="file-tree-toolbar">
+        <span className="file-tree-toolbar-title">Explorer</span>
+        <div className="file-tree-toolbar-actions">
+          <button className="btn btn-icon btn-ghost btn-xs tooltip" data-tooltip="New file" onClick={() => setShowNewFile(true)}><PlusIcon /></button>
+          <button className="btn btn-icon btn-ghost btn-xs tooltip" data-tooltip="New folder" onClick={() => setShowNewFolder(true)}><FolderPlusIcon /></button>
+          <button className="btn btn-icon btn-ghost btn-xs tooltip" data-tooltip="Refresh" onClick={refreshFileTree}><RefreshIcon /></button>
+        </div>
+      </div>
+      <div
+        className={`file-tree ${isRootDragOver ? 'drag-over-root' : ''}`}
+        role="tree"
+        id="file-tree"
+        onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
@@ -313,6 +356,10 @@ export function FileTree() {
           onClose={() => setDeleteNodeValue(null)}
         />
       )}
+
+      {showNewFile && <NewFileModal onClose={() => setShowNewFile(false)} baseDirectory={state.selectedFolderPath || undefined} />}
+      {showNewFolder && <NewFolderModal onClose={() => setShowNewFolder(false)} />}
     </div>
+  </div>
   );
 }

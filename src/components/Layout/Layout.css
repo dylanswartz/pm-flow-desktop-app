@@ -75,7 +75,8 @@
   display: flex;
   width: 100vw;
   height: 100vh;
-  padding-top: 32px; /* For custom titlebar */
+  padding-top: 32px;
+  /* For custom titlebar */
   overflow: hidden;
 }
 
@@ -90,34 +91,7 @@
   overflow: hidden;
 }
 
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-3) var(--space-3);
-  border-bottom: 1px solid var(--color-border-subtle);
-  flex-shrink: 0;
-}
 
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.sidebar-title {
-  font-size: var(--text-md);
-  background: var(--color-accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.sidebar-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
 
 /* Search */
 .sidebar-search {
