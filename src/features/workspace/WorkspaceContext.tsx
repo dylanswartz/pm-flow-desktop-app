@@ -45,6 +45,7 @@ interface WorkspaceState {
   activeFilePath: string | null;
   isLoading: boolean;
   error: string | null;
+  selectedFolderPath: string | null;
 }
 
 type WorkspaceAction =
@@ -59,6 +60,7 @@ type WorkspaceAction =
   | { type: 'SET_ERROR'; error: string | null }
   | { type: 'UPDATE_OPEN_FILE_PATHS'; oldPath: string; newPath: string }
   | { type: 'REMOVE_OPEN_FILES_BY_PATH'; pathOrPrefix: string }
+  | { type: 'SET_SELECTED_FOLDER'; path: string | null }
   | { type: 'CLOSE_WORKSPACE' };
 
 // === Reducer ===
@@ -74,7 +76,11 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
         activeFilePath: null,
         isLoading: false,
         error: null,
+        selectedFolderPath: action.path,
       };
+
+    case 'SET_SELECTED_FOLDER':
+      return { ...state, selectedFolderPath: action.path };
 
     case 'SET_FILE_TREE':
       return { ...state, fileTree: action.tree };
@@ -178,6 +184,7 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
         activeFilePath: null,
         isLoading: false,
         error: null,
+        selectedFolderPath: null,
       };
 
     default:
@@ -207,6 +214,8 @@ interface WorkspaceContextValue {
   getActiveFile: () => OpenFile | undefined;
   openWelcomeTab: () => void;
   createExampleWorkspace: () => Promise<void>;
+  createFileFromTemplate: (type: string, customName?: string, targetDir?: string) => Promise<void>;
+  setSelectedFolderPath: (path: string | null) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -218,6 +227,7 @@ const initialState: WorkspaceState = {
   activeFilePath: null,
   isLoading: false,
   error: null,
+  selectedFolderPath: null,
 };
 
 // === Provider ===
@@ -441,6 +451,57 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_ACTIVE_FILE', path: WELCOME_TAB_ID });
   }, []);
 
+  const createFileFromTemplate = useCallback(async (type: string, customName?: string, targetDir?: string) => {
+    if (!state.workspacePath) return;
+
+    const { TEMPLATE_DEFINITIONS } = await import('../../lib/templates/definitions');
+    const { injectMetadata, inferContext } = await import('../../lib/templates/templateEngine');
+    const { fileExists } = await import('../../lib/filesystem/fileOps');
+
+    const template = (TEMPLATE_DEFINITIONS as any)[type];
+    if (!template) {
+      dispatch({ type: 'SET_ERROR', error: `Template not found: ${type}` });
+      return;
+    }
+
+    let finalDir = targetDir || state.workspacePath;
+    let fileName = customName || 'new-file.md';
+    if (!fileName.endsWith('.md')) fileName += '.md';
+
+    const now = new Date().toISOString().split('T')[0];
+
+    // Daily Logic
+    if (type === 'daily') {
+      finalDir = `${state.workspacePath}/02_daily`;
+      fileName = `${now}.md`;
+
+      const dailyPath = `${finalDir}/${fileName}`;
+      if (await fileExists(dailyPath)) {
+        await openFile(dailyPath);
+        return;
+      }
+    }
+
+    const filePath = `${finalDir}/${fileName}`;
+    const context = {
+      title: fileName.replace(/\.md$/, ''),
+      ...inferContext(filePath, state.workspacePath),
+      date: now
+    };
+
+    const content = injectMetadata(template.content, context);
+
+    try {
+      await createFile(finalDir, fileName, content);
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', error: `Failed to create file from template: ${err}` });
+    }
+  }, [state.workspacePath, createFile, openFile]);
+
+  const setSelectedFolderPath = useCallback((path: string | null) => {
+    dispatch({ type: 'SET_SELECTED_FOLDER', path });
+  }, []);
+
   const value: WorkspaceContextValue = {
     state,
     selectWorkspace,
@@ -461,6 +522,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     getActiveFile,
     openWelcomeTab,
     createExampleWorkspace,
+    createFileFromTemplate,
+    setSelectedFolderPath,
   };
 
   return (

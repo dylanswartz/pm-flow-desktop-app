@@ -53,19 +53,21 @@ interface FileTreeItemProps {
   onAddToBundle: (path: string) => void;
   onMoveNode: (oldPath: string, newPath: string) => void;
   onContextMenu: (e: React.MouseEvent, node: FileNode) => void;
+  onFolderClick: (path: string) => void;
 }
 
-function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle, onMoveNode, onContextMenu }: FileTreeItemProps) {
+function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle, onMoveNode, onContextMenu, onFolderClick }: FileTreeItemProps) {
   const [expanded, setExpanded] = useState(depth < 1);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleClick = useCallback(() => {
     if (node.isDir) {
       setExpanded(prev => !prev);
+      onFolderClick(node.path);
     } else {
       onFileClick(node.path);
     }
-  }, [node, onFileClick]);
+  }, [node, onFileClick, onFolderClick]);
 
   const handleAddToBundle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -166,6 +168,7 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle,
               onAddToBundle={onAddToBundle}
               onMoveNode={onMoveNode}
               onContextMenu={onContextMenu}
+              onFolderClick={onFolderClick}
             />
           ))}
         </div>
@@ -177,7 +180,7 @@ function FileTreeItem({ node, depth, activeFilePath, onFileClick, onAddToBundle,
 // === File Tree ===
 
 export function FileTree() {
-  const { state, openFile, moveNode, duplicateFile } = useWorkspace();
+  const { state, openFile, moveNode, duplicateFile, setSelectedFolderPath } = useWorkspace();
   const { addFile } = useBundle();
   const [isRootDragOver, setIsRootDragOver] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: FileNode } | null>(null);
@@ -275,6 +278,7 @@ export function FileTree() {
           onAddToBundle={addFile}
           onMoveNode={moveNode}
           onContextMenu={handleContextMenu}
+          onFolderClick={setSelectedFolderPath}
         />
       ))}
 

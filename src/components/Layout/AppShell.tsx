@@ -299,7 +299,7 @@ export function AppShell() {
       </aside>
 
       {/* Modals */}
-      {showNewFile && <NewFileModal onClose={() => setShowNewFile(false)} />}
+      {showNewFile && <NewFileModal onClose={() => setShowNewFile(false)} baseDirectory={state.selectedFolderPath || undefined} />}
       {showNewFolder && <NewFolderModal onClose={() => setShowNewFolder(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
