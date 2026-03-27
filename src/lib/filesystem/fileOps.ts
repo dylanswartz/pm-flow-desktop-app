@@ -227,3 +227,64 @@ export function getRelativePath(workspacePath: string, filePath: string): string
   }
   return filePath;
 }
+
+/**
+ * Create a starter workspace with example domains and templates.
+ */
+export async function generateExampleWorkspace(basePath: string): Promise<string> {
+  const workspacePath = `${basePath}/pm-flow-workspace`;
+  
+  if (!(await exists(workspacePath))) {
+    await mkdir(workspacePath, { recursive: true });
+  }
+
+  const dirs = [
+    `${workspacePath}/00_templates`,
+    `${workspacePath}/01_domains/project-phoenix/admin-dashboard`,
+    `${workspacePath}/02_daily`,
+    `${workspacePath}/03_exports`
+  ];
+  for (const dir of dirs) {
+    if (!(await exists(dir))) {
+      await mkdir(dir, { recursive: true });
+    }
+  }
+
+  const templateStr = `---
+title: <Title>
+type: context
+domain: <domain>
+area: <area>
+---
+
+# TLDR
+# Problem Definition
+# User & Use Case Context
+# Current State
+# Desired Outcome
+# Constraints & Guardrails
+# Open Questions
+# Iteration Log
+# Agent Instructions
+`;
+  await writeFileContent(`${workspacePath}/00_templates/context-template.md`, templateStr);
+  await writeFileContent(`${workspacePath}/01_domains/project-phoenix/shared-context.md`, `# Project Phoenix Shared Context\n\nHigh-level domain knowledge about Project Phoenix goes here.`);
+  await writeFileContent(`${workspacePath}/01_domains/project-phoenix/terminology.md`, `# Terminology\n\n- **Project**: A top-level container for all assets.\n- **Phoenix**: The code name for our next-gen platform.`);
+  await writeFileContent(`${workspacePath}/01_domains/project-phoenix/admin-dashboard/context.md`, `---
+title: Admin Dashboard
+type: context
+domain: project-phoenix
+area: admin-dashboard
+---
+
+# TLDR
+Centralized management console for Project Phoenix.
+
+# Problem Definition
+Internal teams need a way to manage user permissions and monitor system health.
+`);
+  await writeFileContent(`${workspacePath}/01_domains/project-phoenix/admin-dashboard/notes.md`, `# Scratchpad\n\n- Should we use React for the frontend?\n- Needs role-based access control (RBAC).`);
+  await writeFileContent(`${workspacePath}/01_domains/project-phoenix/admin-dashboard/iterations.md`, `# History\n\nDecided to use standard Material Design components.`);
+
+  return workspacePath;
+}

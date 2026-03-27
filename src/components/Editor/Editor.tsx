@@ -6,7 +6,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useWorkspace, type OpenFile } from '../../features/workspace/WorkspaceContext';
+import { useWorkspace, type OpenFile, WELCOME_TAB_ID } from '../../features/workspace/WorkspaceContext';
+import { WelcomeTab } from './WelcomeTab';
 import './Editor.css';
 
 // === Icons ===
@@ -93,7 +94,7 @@ function FrontmatterBadges({ file }: { file: OpenFile }) {
 type ViewMode = 'split' | 'edit' | 'preview';
 
 export function Editor() {
-  const { state, updateFileContent, saveActiveFile, getActiveFile } = useWorkspace();
+  const { state, updateFileContent, saveActiveFile, getActiveFile, openWelcomeTab } = useWorkspace();
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -130,9 +131,14 @@ export function Editor() {
             </svg>
           </div>
           <p className="text-secondary">Select a file from the sidebar to start editing</p>
-          <p className="text-xs text-tertiary" style={{ marginTop: 'var(--space-2)' }}>
-            Or use Ctrl+O to open a workspace
-          </p>
+          <div style={{ marginTop: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', alignItems: 'center' }}>
+            <button className="btn btn-secondary btn-sm" onClick={openWelcomeTab}>
+              Getting Started / Welcome
+            </button>
+            <p className="text-xs text-tertiary">
+              Or use Ctrl+O to open a workspace
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -142,7 +148,9 @@ export function Editor() {
     <div className="editor" id="editor">
       <TabBar />
 
-      {activeFile && (
+      {activeFile?.path === WELCOME_TAB_ID && <WelcomeTab />}
+
+      {activeFile && activeFile.path !== WELCOME_TAB_ID && (
         <>
           {/* Toolbar */}
           <div className="editor-toolbar">

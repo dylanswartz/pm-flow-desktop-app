@@ -52,10 +52,11 @@ const FolderPlusIcon = () => (
 );
 
 const GearIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-    <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.2" />
-    <path d="M7 1V2M7 12V13M1 7H2M12 7H13M2.5 2.5L3.5 3.5M10.5 10.5L11.5 11.5M11.5 2.5L10.5 3.5M3.5 10.5L2.5 11.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-  </svg>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2a2 2 0 0 1-2 2a2 2 0 0 0-2 2v.44a2 2 0 0 0 2 2a2 2 0 0 1 2 2a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2a2 2 0 0 1 2-2a2 2 0 0 0 2-2V7.78a2 2 0 0 0-2-2a2 2 0 0 1-2-2a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+);
+
+const LogOutIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
 );
 
 const BundleBoxIcon = () => (
@@ -110,55 +111,10 @@ function SearchResults({ results, onFileClick, onClose }: {
   );
 }
 
-// === Welcome Screen ===
-
-function WelcomeScreen() {
-  const { selectWorkspace } = useWorkspace();
-
-  return (
-    <div className="welcome-screen">
-      <div className="welcome-content animate-slideUp">
-        <div className="welcome-logo">
-          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-            <defs>
-              <linearGradient id="logo-grad" x1="0" y1="0" x2="64" y2="64">
-                <stop offset="0%" stopColor="#6366f1" />
-                <stop offset="100%" stopColor="#8b5cf6" />
-              </linearGradient>
-            </defs>
-            <rect x="8" y="8" width="48" height="48" rx="12" fill="url(#logo-grad)" opacity="0.15" />
-            <path d="M32 16L35 26L45 29L35 32L32 42L29 32L19 29L29 26L32 16Z" stroke="url(#logo-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M20 20L22 24L26 25.5L22 27L20 31L18 27L14 25.5L18 24L20 20Z" stroke="url(#logo-grad)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
-            <path d="M44 36L45.5 39L49 40.5L45.5 42L44 45L42.5 42L39 40.5L42.5 39L44 36Z" stroke="url(#logo-grad)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
-          </svg>
-        </div>
-        <h1 className="welcome-title">PM Flow</h1>
-        <p className="welcome-subtitle">
-          Context Operating System for AI-Native Product Management
-        </p>
-        <p className="welcome-description">
-          Structure your thinking. Build context bundles. Execute AI tasks. Iterate faster.
-        </p>
-        <button
-          className="btn btn-lg btn-primary welcome-cta"
-          onClick={selectWorkspace}
-          id="open-workspace-button"
-        >
-          <FolderOpenIcon />
-          Open Workspace
-        </button>
-        <p className="text-xs text-tertiary" style={{ marginTop: 'var(--space-3)' }}>
-          Select a folder containing your markdown context files
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // === App Shell ===
 
 export function AppShell() {
-  const { state, selectWorkspace, refreshFileTree, openFile } = useWorkspace();
+  const { state, selectWorkspace, refreshFileTree, openFile, closeWorkspace } = useWorkspace();
   const { state: bundleState } = useBundle();
   const [rightPanel, setRightPanel] = useState<RightPanelView>('ai');
   const [searchQuery, setSearchQuery] = useState('');
@@ -201,11 +157,6 @@ export function AppShell() {
 
   const handleNewFile = useCallback(() => setShowNewFile(true), []);
   const handleNewFolder = useCallback(() => setShowNewFolder(true), []);
-
-  // No workspace selected
-  if (!state.workspacePath) {
-    return <WelcomeScreen />;
-  }
 
   return (
     <div className="app-shell" id="app-shell">
@@ -288,7 +239,9 @@ export function AppShell() {
             title="Switch Workspace"
           >
             <FolderOpenIcon />
-            <span className="truncate text-xs">{state.workspacePath.split('/').pop()}</span>
+            <span className="truncate text-xs">
+              {state.workspacePath ? state.workspacePath.split('/').pop() : 'Open Workspace'}
+            </span>
           </button>
           <button
             className="btn btn-icon btn-ghost tooltip"
@@ -297,6 +250,15 @@ export function AppShell() {
           >
             <GearIcon />
           </button>
+          {state.workspacePath && (
+            <button
+              className="btn btn-icon btn-ghost tooltip"
+              data-tooltip="Close Workspace"
+              onClick={closeWorkspace}
+            >
+              <LogOutIcon />
+            </button>
+          )}
         </div>
       </aside>
 

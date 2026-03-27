@@ -26,6 +26,18 @@ export interface OpenFile {
   isDirty: boolean;
 }
 
+export const WELCOME_TAB_ID = 'pmflow://welcome';
+
+export const WelcomeFile: OpenFile = {
+  path: WELCOME_TAB_ID,
+  name: 'Welcome',
+  content: '',
+  originalContent: '',
+  frontmatter: {},
+  sections: [],
+  isDirty: false
+};
+
 interface WorkspaceState {
   workspacePath: string | null;
   fileTree: FileNode[];
@@ -193,6 +205,8 @@ interface WorkspaceContextValue {
   duplicateFile: (path: string) => Promise<string | undefined>;
   closeWorkspace: () => void;
   getActiveFile: () => OpenFile | undefined;
+  openWelcomeTab: () => void;
+  createExampleWorkspace: () => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -216,8 +230,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const lastWorkspace = localStorage.getItem('pmflow-last-workspace');
     if (lastWorkspace) {
       loadWorkspace(lastWorkspace);
+    } else {
+      dispatch({ type: 'OPEN_FILE', file: WelcomeFile });
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadWorkspace = useCallback(async (path: string) => {
     dispatch({ type: 'SET_LOADING', loading: true });
@@ -225,8 +241,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       const tree = await readDirectoryTree(path);
       dispatch({ type: 'SET_WORKSPACE', path, tree });
       localStorage.setItem('pmflow-last-workspace', path);
+      
+      if (tree.length === 0) {
+        dispatch({ type: 'OPEN_FILE', file: WelcomeFile });
+      }
     } catch (err) {
       dispatch({ type: 'SET_ERROR', error: `Failed to load workspace: ${err}` });
+      dispatch({ type: 'OPEN_FILE', file: WelcomeFile });
     }
   }, []);
 
@@ -234,6 +255,25 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const path = await selectWorkspaceFolder();
     if (path) {
       await loadWorkspace(path);
+    }
+  }, [loadWorkspace]);
+
+  const createExampleWorkspace = useCallback(async () => {
+    const { open } = await import('@tauri-apps/plugin-dialog');
+    const basePath = await open({
+      directory: true,
+      multiple: false,
+      title: 'Select where to create Example Workspace',
+    });
+    if (basePath) {
+      const { generateExampleWorkspace: fsGen } = await import('../../lib/filesystem/fileOps');
+      dispatch({ type: 'SET_LOADING', loading: true });
+      try {
+        const newPath = await fsGen(basePath as string);
+        await loadWorkspace(newPath);
+      } catch (err) {
+        dispatch({ type: 'SET_ERROR', error: `Failed to create example workspace: ${err}` });
+      }
     }
   }, [loadWorkspace]);
 
@@ -252,6 +292,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const existing = state.openFiles.find(f => f.path === path);
     if (existing) {
       dispatch({ type: 'SET_ACTIVE_FILE', path });
+      return;
+    }
+
+    // Ignore special scheme tabs since they don't have frontmatter or OS paths
+    if (path === WELCOME_TAB_ID) {
+      dispatch({ type: 'OPEN_FILE', file: WelcomeFile });
       return;
     }
 
@@ -383,11 +429,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const closeWorkspace = useCallback(() => {
     localStorage.removeItem('pmflow-last-workspace');
     dispatch({ type: 'CLOSE_WORKSPACE' });
+    dispatch({ type: 'OPEN_FILE', file: WelcomeFile });
   }, []);
 
   const getActiveFile = useCallback(() => {
     return state.openFiles.find(f => f.path === state.activeFilePath);
   }, [state.openFiles, state.activeFilePath]);
+
+  const openWelcomeTab = useCallback(() => {
+    dispatch({ type: 'OPEN_FILE', file: WelcomeFile });
+    dispatch({ type: 'SET_ACTIVE_FILE', path: WELCOME_TAB_ID });
+  }, []);
 
   const value: WorkspaceContextValue = {
     state,
@@ -407,6 +459,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     duplicateFile,
     closeWorkspace,
     getActiveFile,
+    openWelcomeTab,
+    createExampleWorkspace,
   };
 
   return (
