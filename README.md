@@ -1,3 +1,5 @@
+This repo is now inactive see: https://github.com/dylanswartz/pmf/
+
 # PM Flow
 
 A local-first desktop app for AI-native product management: manage markdown context files, build context bundles, run AI tasks (Claude-first), and write results back to the filesystem.
