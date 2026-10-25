@@ -1,4 +1,4 @@
-This repo is now inactive see: https://github.com/dylanswartz/pmf/
+This repo is now inactive see the new version: https://github.com/dylanswartz/pmf/
 
 # PM Flow
 
